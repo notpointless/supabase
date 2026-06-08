@@ -96,10 +96,13 @@ export const SSOConfig = () => {
   const FORM_ID = 'sso-config-form'
 
   const { data: organization } = useSelectedOrganizationQuery()
-  // [console fork] SP-initiated flows start at THIS dashboard, not supabase.com.
-  const appUrl =
-    (typeof window !== 'undefined' ? window.location.origin : process.env.NEXT_PUBLIC_SITE_URL) ||
-    'your dashboard'
+  // [console fork] SP-initiated flows start at THIS dashboard, not supabase.com. Resolve the
+  // origin after mount so SSR (no window) and the first client render agree (no hydration
+  // mismatch).
+  const [appUrl, setAppUrl] = useState(process.env.NEXT_PUBLIC_SITE_URL || 'your dashboard')
+  useEffect(() => {
+    if (typeof window !== 'undefined') setAppUrl(window.location.origin)
+  }, [])
   // [console fork] Self-host: SSO is never plan-gated.
   const hasAccessToSso = true
   const isLoadingEntitlement = false

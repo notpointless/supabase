@@ -27,6 +27,10 @@ const SignInLayout = ({
   const router = useRouter()
   const queryClient = useQueryClient()
   const { resolvedTheme } = useTheme()
+  // [console fork] resolvedTheme is undefined during SSR; gate theme-dependent rendering (the
+  // logo) on mount so the server HTML and the first client render match (no hydration mismatch).
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => setMounted(true), [])
   const ongoingIncident = useFlag('ongoingIncident')
 
   const {
@@ -114,7 +118,7 @@ const SignInLayout = ({
                 <Link href={logoLinkToMarketingSite ? 'https://github.com/notpointless/supabase-console' : '/organizations'}>
                   <img
                     src={
-                      resolvedTheme?.includes('dark')
+                      mounted && resolvedTheme?.includes('dark')
                         ? `${BASE_PATH}/img/supabase-dark.svg`
                         : `${BASE_PATH}/img/supabase-light.svg`
                     }
