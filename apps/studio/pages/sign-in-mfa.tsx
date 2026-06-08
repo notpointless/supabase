@@ -47,33 +47,36 @@ const SignInMfaPage: NextPageWithLayout = () => {
           return router.replace({ pathname: '/sign-in', query: router.query })
         }
 
+        // [console fork] Check the assurance level BEFORE the access token. A 2FA user who
+        // just entered their password has no session/token yet (better-auth returns a
+        // twoFactorRedirect and only issues the session after the code is verified). The
+        // original token-first check bounced them straight back to /sign-in, so the MFA form
+        // never showed. If a step-up is required, render the form regardless of token.
+        const { data, error: aalError } = await auth.mfa.getAuthenticatorAssuranceLevel()
+        if (aalError) {
+          toast.error(
+            `Failed to retrieve assurance level: ${aalError.message}. Please try signing in again`
+          )
+          setLoading(false)
+          return router.push({ pathname: '/sign-in', query: router.query })
+        }
+
+        if (data.currentLevel !== data.nextLevel) {
+          // Second factor required — show the MFA form.
+          setLoading(false)
+          return
+        }
+
+        // No step-up needed: a real session means sign-in is complete; otherwise the user
+        // landed here without authenticating, so send them back to /sign-in.
         const token = await getAccessToken()
-
         if (token) {
-          const { data, error } = await auth.mfa.getAuthenticatorAssuranceLevel()
-          if (error) {
-            // if there was a problem signing in via the url, don't redirect
-            toast.error(
-              `Failed to retrieve assurance level: ${error.message}. Please try signing in again`
-            )
-            setLoading(false)
-            return router.push({ pathname: '/sign-in', query: router.query })
-          }
-
-          if (data.currentLevel === data.nextLevel) {
-            onSignInTracked()
-            addLoginEvent({})
-
-            await queryClient.resetQueries()
-            router.push(getReturnToPath())
-            return
-          } else {
-            // Show the MFA form
-            setLoading(false)
-            return
-          }
+          onSignInTracked()
+          addLoginEvent({})
+          await queryClient.resetQueries()
+          router.push(getReturnToPath())
+          return
         } else {
-          // if the user doesn't have a token, he needs to go back to the sign-in page
           const redirectTo = buildPathWithParams('/sign-in')
           router.replace(redirectTo)
           return
