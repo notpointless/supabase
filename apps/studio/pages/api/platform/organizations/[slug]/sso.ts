@@ -20,7 +20,9 @@ function registerBody(orgId: string, body: any) {
   const samlConfig: Record<string, any> = {}
   if (body?.metadata_xml_url) samlConfig.metadataUrl = body.metadata_xml_url
   if (body?.metadata_xml_file) samlConfig.idpMetadata = { metadata: body.metadata_xml_file }
-  return { providerId: providerIdFor(orgId), domain: domains[0] ?? '', samlConfig }
+  // better-auth's domainMatches() splits the stored `domain` on "," so a single provider can
+  // serve every email domain the org configured — send them all, not just the first.
+  return { providerId: providerIdFor(orgId), domain: domains.join(',') || '', samlConfig }
 }
 
 async function findProviderId(req: NextApiRequest, orgId: string): Promise<string | null> {
