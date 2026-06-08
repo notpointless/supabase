@@ -204,6 +204,35 @@ function makeConsoleGotrueShim() {
       }
     },
 
+    // SSO sign-in. The dashboard's "Continue with SSO" form calls this with the email
+    // domain (or a providerId) and expects `{ data: { url }, error }` — it redirects the
+    // browser to `data.url` (the identity provider). Maps to the @better-auth/sso plugin's
+    // POST /sign-in/sso, which returns the IdP authorize URL for the org's registered
+    // provider matching the domain.
+    async signInWithSSO(params: {
+      domain?: string
+      providerId?: string
+      options?: { redirectTo?: string; captchaToken?: string }
+    }) {
+      try {
+        const body: Record<string, unknown> = {}
+        if (params.providerId) body.providerId = params.providerId
+        else if (params.domain) body.domain = params.domain
+        if (params.options?.redirectTo) body.callbackURL = params.options.redirectTo
+        const res = await authFetch('/sign-in/sso', { method: 'POST', body: JSON.stringify(body) })
+        const json = await res.json().catch(() => ({}))
+        if (!res.ok || !json?.url) {
+          return fail(
+            json?.message ?? json?.error?.message ?? 'No SSO provider is configured for this domain',
+            res.status
+          )
+        }
+        return ok({ url: json.url as string, provider: 'sso' })
+      } catch (e: any) {
+        return fail(e?.message ?? 'Failed to sign in with SSO', 500)
+      }
+    },
+
     // MFA namespace. The dashboard checks `currentLevel !== nextLevel` after
     // sign-in to decide whether to route to the second-factor screen. Until the
     // BFF surfaces two-factor status, report aal1==aal1 (no step-up needed).

@@ -96,6 +96,10 @@ export const SSOConfig = () => {
   const FORM_ID = 'sso-config-form'
 
   const { data: organization } = useSelectedOrganizationQuery()
+  // [console fork] SP-initiated flows start at THIS dashboard, not supabase.com.
+  const appUrl =
+    (typeof window !== 'undefined' ? window.location.origin : process.env.NEXT_PUBLIC_SITE_URL) ||
+    'your dashboard'
   // [console fork] Self-host: SSO is never plan-gated.
   const hasAccessToSso = true
   const isLoadingEntitlement = false
@@ -313,20 +317,20 @@ export const SSOConfig = () => {
                           >
                             <div className="space-y-3 text-sm">
                               <div>
-                                <strong>SP-initiated (Service Provider):</strong> Users start at
-                                supabase.com, enter their email address, and are redirected to your
+                                <strong>SP-initiated (Service Provider):</strong> Users start at{' '}
+                                {appUrl}, enter their email address, and are redirected to your
                                 identity provider (Okta, Azure AD, etc.) for authentication.
                                 Requires configuring email domains.
                               </div>
                               <div>
                                 <strong>IdP-initiated (Identity Provider):</strong> Users click an
                                 app tile or bookmark in your identity provider dashboard and are
-                                directly authenticated into Supabase. Works automatically without
+                                directly authenticated into {appUrl}. Works automatically without
                                 domain configuration.
                               </div>
                               <p className="text-foreground-lighter">
                                 Most enterprises use IdP-initiated flow for its simplicity. Enable
-                                SP-initiated only if you need users to start at supabase.com.{' '}
+                                SP-initiated only if you need users to start at {appUrl}.{' '}
                                 <InlineLink href={`${DOCS_URL}/guides/platform/sso#login-flows`}>
                                   Learn more about SSO flows
                                 </InlineLink>
