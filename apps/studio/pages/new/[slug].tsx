@@ -56,6 +56,7 @@ import {
   ProjectCreateVariables,
   useProjectCreateMutation,
 } from '@/data/projects/project-create-mutation'
+import { createGitHubConnection } from '@/data/integrations/github-connection-create-mutation'
 import { useCustomContent } from '@/hooks/custom-content/useCustomContent'
 import { useCheckEntitlements } from '@/hooks/misc/useCheckEntitlements'
 import { useAsyncCheckPermissions } from '@/hooks/misc/useCheckPermissions'
@@ -330,7 +331,7 @@ const Wizard: NextPageWithLayout = () => {
     isPending: isCreatingNewProject,
     isSuccess: isSuccessNewProject,
   } = useProjectCreateMutation({
-    onSuccess: (res) => {
+    onSuccess: async (res) => {
       track(
         'project_creation_simple_version_submitted',
         {
@@ -349,6 +350,28 @@ const Wizard: NextPageWithLayout = () => {
           organization: res.organization_slug,
         }
       )
+
+      // [console fork] The control plane's project-create ignores the githubInstallationId/
+      // githubRepositoryId fields, so if a repo was picked in the wizard, link it to the new
+      // project explicitly here (same call the project Integrations form makes).
+      const ghInstallationId = form.getValues('githubInstallationId')
+      const ghRepositoryId = form.getValues('githubRepositoryId')
+      if (currentOrg && ghInstallationId !== undefined && ghRepositoryId) {
+        try {
+          await createGitHubConnection({
+            organizationId: currentOrg.id,
+            connection: {
+              installation_id: ghInstallationId,
+              project_ref: res.ref,
+              repository_id: Number(ghRepositoryId),
+              workdir: '',
+            },
+          })
+        } catch (error) {
+          // best-effort; the repo can still be connected from the project's settings
+        }
+      }
+
       router.push(`/project/${res.ref}`)
     },
   })
