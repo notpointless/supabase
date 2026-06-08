@@ -44,4 +44,22 @@ export default bff({
     }
     return res.status(200).json(data ?? {})
   },
+  DELETE: async (req, res) => {
+    const orgId = await resolveOrgId(req, req.query.slug ? String(req.query.slug) : undefined)
+    if (!orgId) return res.status(200).json({})
+    const { ok, status, data } = await consoleFetch(
+      req,
+      `/api/v1/organizations/${orgId}/github/authorization`,
+      { method: 'DELETE' }
+    )
+    if (!ok) {
+      return res.status(status && status >= 400 ? status : 502).json({
+        message:
+          (data as any)?.error?.message ??
+          (data as any)?.message ??
+          'Failed to remove GitHub authorization',
+      })
+    }
+    return res.status(200).json(data ?? {})
+  },
 })

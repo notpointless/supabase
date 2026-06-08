@@ -20,7 +20,6 @@ import { ShimmeringLoader } from 'ui-patterns/ShimmeringLoader'
 import { AccountConnections } from '@/components/interfaces/Account/Preferences/AccountConnections'
 import { AccountDeletion } from '@/components/interfaces/Account/Preferences/AccountDeletion'
 import { AccountIdentities } from '@/components/interfaces/Account/Preferences/AccountIdentities'
-import { AnalyticsSettings } from '@/components/interfaces/Account/Preferences/AnalyticsSettings'
 import { DashboardSettings } from '@/components/interfaces/Account/Preferences/DashboardSettings'
 import { HotkeySettings } from '@/components/interfaces/Account/Preferences/HotkeySettings'
 import { ProfileInformation } from '@/components/interfaces/Account/Preferences/ProfileInformation'
@@ -61,12 +60,10 @@ const PreferencesPageHeader = ({ description }: { description: string }) => (
 )
 
 const PlatformPreferences = () => {
-  const { profileShowInformation, profileShowAnalyticsAndMarketing, profileShowAccountDeletion } =
-    useIsFeatureEnabled([
-      'profile:show_information',
-      'profile:show_analytics_and_marketing',
-      'profile:show_account_deletion',
-    ])
+  const { profileShowInformation, profileShowAccountDeletion } = useIsFeatureEnabled([
+    'profile:show_information',
+    'profile:show_account_deletion',
+  ])
   const { error, isLoading, isError } = useProfile()
 
   return (
@@ -101,8 +98,6 @@ const PlatformPreferences = () => {
             <HotkeySettings />
 
             <DashboardSettings />
-
-            {profileShowAnalyticsAndMarketing && <AnalyticsSettings />}
 
             {profileShowAccountDeletion && <AccountDeletion />}
           </>
