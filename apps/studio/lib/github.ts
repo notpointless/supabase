@@ -22,14 +22,23 @@ const GITHUB_INTEGRATION_CLIENT_ID =
         ? `Iv1.2681ab9a0360d8ad`
         : `Iv1.5022a3b44d150fbf`)
 
-const GITHUB_INTEGRATION_AUTHORIZATION_URL = `https://github.com/login/oauth/authorize?client_id=${GITHUB_INTEGRATION_CLIENT_ID}`
 export const GITHUB_INTEGRATION_INSTALLATION_URL = `https://github.com/apps/${GITHUB_INTEGRATION_APP_NAME}/installations/new`
 export const GITHUB_INTEGRATION_REVOKE_AUTHORIZATION_URL = `https://github.com/settings/connections/applications/${GITHUB_INTEGRATION_CLIENT_ID}`
 
+// [console fork] GitHub credentials are per-organization (registered via Org Settings →
+// General → GitHub App). Pass the org's app `{ clientId, appName }` so the OAuth
+// authorize + installation URLs match the App whose secret the control plane uses to
+// exchange the code. Falls back to the build-time client id/app name when not provided.
 export function openInstallGitHubIntegrationWindow(
   type: 'install' | 'authorize',
+  app?: { clientId?: string; appName?: string },
   closeCallback?: () => void
 ) {
+  const clientId = app?.clientId || GITHUB_INTEGRATION_CLIENT_ID
+  const appName = app?.appName || GITHUB_INTEGRATION_APP_NAME
+  const authorizationUrl = `https://github.com/login/oauth/authorize?client_id=${clientId}`
+  const installationUrl = `https://github.com/apps/${appName}/installations/new`
+
   const w = 600
   const h = 800
 
@@ -49,11 +58,11 @@ export function openInstallGitHubIntegrationWindow(
 
   let windowUrl: string | undefined
   if (type === 'install') {
-    windowUrl = GITHUB_INTEGRATION_INSTALLATION_URL
+    windowUrl = installationUrl
   } else {
     const state = makeRandomString(32)
     safeLocalStorage.setItem(LOCAL_STORAGE_KEYS.GITHUB_AUTHORIZATION_STATE, state)
-    windowUrl = `${GITHUB_INTEGRATION_AUTHORIZATION_URL}&state=${state}&prompt=select_account`
+    windowUrl = `${authorizationUrl}&state=${state}&prompt=select_account`
   }
 
   const systemZoom = width / window.screen.availWidth

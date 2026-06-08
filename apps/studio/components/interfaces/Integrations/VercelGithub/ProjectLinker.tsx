@@ -30,6 +30,7 @@ import { useProjectDetailQuery } from '@/data/projects/project-detail-query'
 import { useIsFeatureEnabled } from '@/hooks/misc/useIsFeatureEnabled'
 import { useSelectedOrganizationQuery } from '@/hooks/misc/useSelectedOrganization'
 import { BASE_PATH } from '@/lib/constants'
+import { useGitHubAppQuery } from '@/data/organizations/github-app-query'
 import { openInstallGitHubIntegrationWindow } from '@/lib/github'
 import { EMPTY_ARR } from '@/lib/void'
 
@@ -94,6 +95,9 @@ const ProjectLinker = ({
   )
 
   const { data: selectedOrganization } = useSelectedOrganizationQuery()
+  // [console fork] Use the organization's registered GitHub App for the install flow.
+  const { data: githubAppConfig } = useGitHubAppQuery({ slug })
+  const githubApp = { clientId: githubAppConfig?.client_id, appName: githubAppConfig?.app_name }
   const { data: orgProjects, isPending: loadingSupabaseProjects } = useOrgProjectsInfiniteQuery({
     slug,
   })
@@ -357,7 +361,7 @@ const ProjectLinker = ({
                           <CommandGroup>
                             <CommandItem
                               className="flex gap-2 items-center cursor-pointer"
-                              onSelect={() => openInstallGitHubIntegrationWindow('install')}
+                              onSelect={() => openInstallGitHubIntegrationWindow('install', githubApp)}
                             >
                               <PlusIcon size={16} />
                               Add GitHub Repositories

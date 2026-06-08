@@ -20,6 +20,8 @@ import { FormItemLayout } from 'ui-patterns/form/FormItemLayout/FormItemLayout'
 
 import { useGitHubAuthorizationQuery } from '@/data/integrations/github-authorization-query'
 import { useGitHubRepositoriesQuery } from '@/data/integrations/github-repositories-query'
+import { useGitHubAppQuery } from '@/data/organizations/github-app-query'
+import { useSelectedOrganizationQuery } from '@/hooks/misc/useSelectedOrganization'
 import { openInstallGitHubIntegrationWindow } from '@/lib/github'
 import { EMPTY_ARR } from '@/lib/void'
 
@@ -125,6 +127,11 @@ export const GitHubRepositoryField = <TFormValues extends FieldValues>({
 }: GitHubRepositoryFieldProps<TFormValues>) => {
   const [isRepoSelectorOpen, setIsRepoSelectorOpen] = useState(false)
 
+  // [console fork] Use the organization's registered GitHub App for the OAuth/install flow.
+  const { data: selectedOrganization } = useSelectedOrganizationQuery()
+  const { data: githubAppConfig } = useGitHubAppQuery({ slug: selectedOrganization?.slug })
+  const githubApp = { clientId: githubAppConfig?.client_id, appName: githubAppConfig?.app_name }
+
   const currentRepositoryId = form.watch(name) as string | undefined
   const selectedRepository = repositories.find((repo) => repo.id === currentRepositoryId)
 
@@ -143,7 +150,7 @@ export const GitHubRepositoryField = <TFormValues extends FieldValues>({
                 disabled={disabled}
                 onClick={() => {
                   onConnectClick?.()
-                  openInstallGitHubIntegrationWindow('authorize', refetch)
+                  openInstallGitHubIntegrationWindow('authorize', githubApp, refetch)
                 }}
                 icon={GITHUB_ICON}
               >
@@ -217,7 +224,7 @@ export const GitHubRepositoryField = <TFormValues extends FieldValues>({
                         className="flex gap-2 items-center cursor-pointer"
                         onSelect={() => {
                           setIsRepoSelectorOpen(false)
-                          openInstallGitHubIntegrationWindow('install', refetch)
+                          openInstallGitHubIntegrationWindow('install', githubApp, refetch)
                         }}
                       >
                         <PlusIcon size={16} />
@@ -232,7 +239,7 @@ export const GitHubRepositoryField = <TFormValues extends FieldValues>({
                             className="flex gap-2 items-start cursor-pointer"
                             onSelect={() => {
                               setIsRepoSelectorOpen(false)
-                              openInstallGitHubIntegrationWindow('authorize', refetch)
+                              openInstallGitHubIntegrationWindow('authorize', githubApp, refetch)
                             }}
                           >
                             <RefreshCw size={16} className="mt-0.5 shrink-0" />

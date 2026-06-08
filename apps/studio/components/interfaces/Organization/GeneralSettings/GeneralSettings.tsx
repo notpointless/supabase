@@ -7,6 +7,7 @@ import {
 } from 'ui-patterns/PageSection'
 
 import { DataPrivacyForm } from './DataPrivacyForm'
+import { GitHubAppForm } from './GitHubAppForm'
 import { OrganizationDeletePanel } from './OrganizationDeletePanel'
 import { OrganizationDetailsForm } from './OrganizationDetailsForm'
 import { NoProjectsOnPaidOrgInfo } from '@/components/interfaces/Billing/NoProjectsOnPaidOrgInfo'
@@ -27,6 +28,17 @@ export const GeneralSettings = () => {
         </PageSectionMeta>
         <PageSectionContent>
           <OrganizationDetailsForm />
+        </PageSectionContent>
+      </PageSection>
+
+      <PageSection>
+        <PageSectionMeta>
+          <PageSectionSummary>
+            <PageSectionTitle>GitHub App</PageSectionTitle>
+          </PageSectionSummary>
+        </PageSectionMeta>
+        <PageSectionContent>
+          <GitHubAppForm />
         </PageSectionContent>
       </PageSection>
 
