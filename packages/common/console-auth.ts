@@ -110,6 +110,11 @@ async function authFetch(path: string, init?: RequestInit) {
 
 function makeConsoleGotrueShim() {
   let currentSession: GotrueSession | null = null
+  // [console fork] True after a password sign-in that returned a `twoFactorRedirect` (a 2FA
+  // user has no session until they verify a code). Drives getAuthenticatorAssuranceLevel +
+  // listFactors so the dashboard shows the second-factor screen; cleared once verify-totp
+  // establishes the session (or on sign-out).
+  let mfaPending = false
   const subscribers = new Set<Subscriber>()
 
   const emit = (event: AuthChangeEvent) => {
@@ -198,6 +203,14 @@ function makeConsoleGotrueShim() {
         if (!res.ok) {
           return fail(json?.message ?? 'Invalid login credentials', res.status)
         }
+        // 2FA user: better-auth returns { twoFactorRedirect: true } and no session yet. Flag
+        // it (no error) so SignInForm's AAL check routes to /sign-in-mfa instead of falling
+        // through to the dashboard with no session (which bounces back to sign-in).
+        if (json?.twoFactorRedirect) {
+          mfaPending = true
+          return ok({ user: null, session: null })
+        }
+        mfaPending = false
         const session = await fetchSession()
         emit('SIGNED_IN')
         return ok({ user: session?.user ?? toGotrueUser(json?.user), session })
@@ -240,17 +253,23 @@ function makeConsoleGotrueShim() {
     // BFF surfaces two-factor status, report aal1==aal1 (no step-up needed).
     mfa: {
       async getAuthenticatorAssuranceLevel() {
+        // Pending 2FA: password accepted but the code hasn't been verified yet -> step-up
+        // required (aal1 -> aal2) so the dashboard routes to the second-factor screen.
+        if (mfaPending) {
+          return ok({ currentLevel: 'aal1', nextLevel: 'aal2', currentAuthenticationMethods: [] })
+        }
+        // A live session means any required second factor was already satisfied this session,
+        // so current == next (no step-up). Reporting aal2-needed off the static
+        // twoFactorEnabled flag would loop the dashboard back to the MFA screen forever.
         const session = await fetchSession()
-        const hasTotp = !!(session?.user as any)?.twoFactorEnabled
-        return ok({
-          currentLevel: 'aal1',
-          nextLevel: hasTotp ? 'aal2' : 'aal1',
-          currentAuthenticationMethods: [],
-        })
+        const level = (session?.user as any)?.twoFactorEnabled ? 'aal2' : 'aal1'
+        return ok({ currentLevel: level, nextLevel: level, currentAuthenticationMethods: [] })
       },
       async listFactors() {
         const session = await fetchSession()
-        const hasTotp = !!(session?.user as any)?.twoFactorEnabled
+        // During pending 2FA there's no session yet, but the challenge screen still needs a
+        // factor to verify against.
+        const hasTotp = mfaPending || !!(session?.user as any)?.twoFactorEnabled
         const totp = hasTotp
           ? [{ id: 'totp', factor_type: 'totp', friendly_name: 'Authenticator app', status: 'verified' }]
           : []
@@ -332,6 +351,8 @@ function makeConsoleGotrueShim() {
               res.status
             )
           }
+          // Code verified -> the session is now established (aal2); clear the pending flag.
+          mfaPending = false
           const session = await fetchSession()
           emit('SIGNED_IN')
           return ok({ user: session?.user ?? null, session })
@@ -348,6 +369,7 @@ function makeConsoleGotrueShim() {
         // ignore network errors on sign-out; clear local state regardless
       }
       currentSession = null
+      mfaPending = false
       emit('SIGNED_OUT')
       return { error: null }
     },
