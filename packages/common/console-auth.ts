@@ -247,7 +247,38 @@ function makeConsoleGotrueShim() {
         })
       },
       async listFactors() {
-        return ok({ all: [], totp: [], phone: [] })
+        const session = await fetchSession()
+        const hasTotp = !!(session?.user as any)?.twoFactorEnabled
+        const totp = hasTotp
+          ? [{ id: 'totp', factor_type: 'totp', friendly_name: 'Authenticator app', status: 'verified' }]
+          : []
+        return ok({ all: totp, totp, phone: [] })
+      },
+
+      // Verify the TOTP code at sign-in. The "Confirm your MFA" form (shown when
+      // getAuthenticatorAssuranceLevel reports aal1->aal2) calls challengeAndVerify with the
+      // factor id + 6-digit code. Map it to @better-auth's two-factor verify-totp, which
+      // upgrades the session to aal2. The form only inspects `error`, so on success we
+      // return the refreshed session.
+      async challengeAndVerify(params: { factorId?: string; code: string }) {
+        try {
+          const res = await authFetch('/two-factor/verify-totp', {
+            method: 'POST',
+            body: JSON.stringify({ code: params.code }),
+          })
+          const json = await res.json().catch(() => ({}))
+          if (!res.ok || json?.error) {
+            return fail(
+              json?.message ?? json?.error?.message ?? 'Invalid two-factor authentication code',
+              res.status
+            )
+          }
+          const session = await fetchSession()
+          emit('SIGNED_IN')
+          return ok({ user: session?.user ?? null, session })
+        } catch (e: any) {
+          return fail(e?.message ?? 'Failed to verify two-factor code', 500)
+        }
       },
     },
 
