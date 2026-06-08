@@ -5,8 +5,10 @@ import { toast } from 'sonner'
 import { auth } from '@/lib/gotrue'
 import { UseCustomMutationOptions } from '@/types'
 
-const mfaEnroll = async (params: MFAEnrollParams) => {
-  const { error, data } = await auth.mfa.enroll(params)
+// [console fork] better-auth requires the account password to enable 2FA, so the enroll
+// modal collects it and passes it through to the gotrue shim's enroll.
+const mfaEnroll = async (params: MFAEnrollParams & { password?: string }) => {
+  const { error, data } = await auth.mfa.enroll(params as MFAEnrollParams)
 
   if (error) throw error
   return data

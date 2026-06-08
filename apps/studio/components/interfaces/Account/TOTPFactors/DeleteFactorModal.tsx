@@ -1,7 +1,10 @@
 import { useQueryClient } from '@tanstack/react-query'
 import { LOCAL_STORAGE_KEYS } from 'common'
+import { useState } from 'react'
 import { toast } from 'sonner'
+import { Input } from 'ui'
 import ConfirmationModal from 'ui-patterns/Dialogs/ConfirmationModal'
+import { FormItemLayout } from 'ui-patterns/form/FormItemLayout/FormItemLayout'
 
 import { organizationKeys } from '@/data/organizations/keys'
 import { useMfaUnenrollMutation } from '@/data/profile/mfa-unenroll-mutation'
@@ -21,10 +24,17 @@ const DeleteFactorModal = ({
   onClose,
 }: DeleteFactorModalProps) => {
   const queryClient = useQueryClient()
+  // [console fork] better-auth requires the account password to disable 2FA.
+  const [password, setPassword] = useState('')
   const [lastVisitedOrganization] = useLocalStorageQuery(
     LOCAL_STORAGE_KEYS.LAST_VISITED_ORGANIZATION,
     ''
   )
+
+  const close = () => {
+    setPassword('')
+    onClose()
+  }
 
   const { mutate: unenroll, isPending } = useMfaUnenrollMutation({
     onSuccess: async () => {
@@ -34,7 +44,7 @@ const DeleteFactorModal = ({
         })
       }
       toast.success(`Successfully deleted factor`)
-      onClose()
+      close()
     },
   })
 
@@ -47,8 +57,8 @@ const DeleteFactorModal = ({
       confirmLabel="Delete"
       confirmLabelLoading="Deleting"
       loading={isPending}
-      onCancel={onClose}
-      onConfirm={() => factorId && unenroll({ factorId })}
+      onCancel={close}
+      onConfirm={() => factorId && unenroll({ factorId, password })}
       alert={{
         title: lastFactorToBeDeleted
           ? 'Multi-factor authentication will be disabled'
@@ -75,6 +85,21 @@ const DeleteFactorModal = ({
           </>
         )}
       </ul>
+
+      <FormItemLayout
+        isReactForm={false}
+        className="mt-3"
+        label="Confirm your account password"
+        description="Required to disable two-factor authentication"
+      >
+        <Input
+          type="password"
+          autoComplete="current-password"
+          placeholder="••••••••"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+        />
+      </FormItemLayout>
     </ConfirmationModal>
   )
 }

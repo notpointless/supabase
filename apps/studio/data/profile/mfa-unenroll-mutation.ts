@@ -6,8 +6,10 @@ import { profileKeys } from './keys'
 import { auth } from '@/lib/gotrue'
 import { UseCustomMutationOptions } from '@/types'
 
-const mfaUnenroll = async (params: MFAUnenrollParams) => {
-  const { error, data } = await auth.mfa.unenroll(params)
+// [console fork] better-auth requires the account password to disable 2FA, so callers pass
+// it alongside the factor id.
+const mfaUnenroll = async (params: MFAUnenrollParams & { password?: string }) => {
+  const { error, data } = await auth.mfa.unenroll(params as MFAUnenrollParams)
 
   if (error) throw error
   return data
@@ -21,7 +23,11 @@ export const useMfaUnenrollMutation = ({
   onError,
   ...options
 }: Omit<
-  UseCustomMutationOptions<CustomMFAUnenrollResponse, CustomMFAUnenrollError, MFAUnenrollParams>,
+  UseCustomMutationOptions<
+    CustomMFAUnenrollResponse,
+    CustomMFAUnenrollError,
+    MFAUnenrollParams & { password?: string }
+  >,
   'mutationFn'
 > = {}) => {
   const queryClient = useQueryClient()

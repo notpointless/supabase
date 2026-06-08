@@ -27,9 +27,15 @@ interface AddNewFactorModalProps {
 
 export const AddNewFactorModal = ({ visible, onClose }: AddNewFactorModalProps) => {
   const { data, mutate: enroll, isPending: isEnrolling, reset } = useMfaEnrollMutation()
+  // [console fork] The account password is collected in step one (better-auth needs it to
+  // enable 2FA) and reused if the user cancels an unverified factor (disable is password-gated).
+  const [password, setPassword] = useState('')
 
   useEffect(() => {
-    if (!visible) reset()
+    if (!visible) {
+      reset()
+      setPassword('')
+    }
   }, [reset, visible])
 
   return (
@@ -38,6 +44,7 @@ export const AddNewFactorModal = ({ visible, onClose }: AddNewFactorModalProps) 
         visible={visible && !Boolean(data)}
         isEnrolling={isEnrolling}
         enroll={enroll}
+        setPassword={setPassword}
         reset={reset}
         onClose={onClose}
       />
@@ -45,6 +52,7 @@ export const AddNewFactorModal = ({ visible, onClose }: AddNewFactorModalProps) 
         visible={visible && Boolean(data)}
         factorName={data?.friendly_name ?? ''}
         factor={data as Extract<typeof data, { type: 'totp' }>}
+        password={password}
         isLoading={isEnrolling}
         onClose={onClose}
       />
@@ -56,28 +64,31 @@ interface FirstStepProps {
   visible: boolean
   isEnrolling: boolean
   reset: () => void
-  enroll: (params: { factorType: 'totp'; friendlyName?: string }) => void
+  enroll: (params: { factorType: 'totp'; friendlyName?: string; password?: string }) => void
+  setPassword: (password: string) => void
   onClose: () => void
 }
 
-const FirstStep = ({ visible, isEnrolling, enroll, onClose }: FirstStepProps) => {
+const FirstStep = ({ visible, isEnrolling, enroll, setPassword, onClose }: FirstStepProps) => {
   const FormSchema = z.object({
     name: z.string().min(1, 'Please provide a name to identify this app'),
+    password: z.string().min(1, 'Please enter your account password'),
   })
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
-    defaultValues: { name: '' },
+    defaultValues: { name: '', password: '' },
     mode: 'onChange',
   })
 
   const onSubmit: SubmitHandler<z.infer<typeof FormSchema>> = async (values) => {
-    enroll({ factorType: 'totp', friendlyName: values.name })
+    setPassword(values.password)
+    enroll({ factorType: 'totp', friendlyName: values.name, password: values.password })
   }
 
   useEffect(() => {
     if (!visible) {
       // Generate a name with a number between 0 and 1000
-      form.reset({ name: `App ${Math.floor(Math.random() * 1000)}` })
+      form.reset({ name: `App ${Math.floor(Math.random() * 1000)}`, password: '' })
     }
   }, [form, visible])
 
@@ -114,6 +125,27 @@ const FirstStep = ({ visible, isEnrolling, enroll, onClose }: FirstStepProps) =>
               </FormItemLayout>
             )}
           />
+          <FormField
+            key="password"
+            name="password"
+            control={form.control}
+            render={({ field }) => (
+              <FormItemLayout
+                name="password"
+                label="Confirm your account password"
+                description="Required to enable two-factor authentication"
+              >
+                <FormControl>
+                  <Input
+                    id="password"
+                    type="password"
+                    autoComplete="current-password"
+                    {...field}
+                  />
+                </FormControl>
+              </FormItemLayout>
+            )}
+          />
         </form>
       </Form>
     </ConfirmationModal>
@@ -128,6 +160,7 @@ interface SecondStepProps {
     type: 'totp'
     totp: TOTP
   }
+  password: string
   isLoading: boolean
   onClose: () => void
 }
@@ -136,6 +169,7 @@ const SecondStep = ({
   visible,
   factorName,
   factor: outerFactor,
+  password,
   isLoading,
   onClose,
 }: SecondStepProps) => {
@@ -200,7 +234,7 @@ const SecondStep = ({
         // If a factor has been created (but not verified), unenroll it. This will be run as a
         // side effect so that it's not confusing to the user why the modal stays open while
         // unenrolling.
-        if (factor) unenroll({ factorId: factor.id })
+        if (factor) unenroll({ factorId: factor.id, password })
       }}
       onConfirm={form.handleSubmit(onSubmit)}
     >

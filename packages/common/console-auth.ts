@@ -13,6 +13,8 @@
  * happens server-side (the BFF forwards the cookie).
  */
 
+import QRCode from 'qrcode'
+
 const AUTH_BASE = '/api/auth'
 
 type GotrueUser = {
@@ -253,6 +255,63 @@ function makeConsoleGotrueShim() {
           ? [{ id: 'totp', factor_type: 'totp', friendly_name: 'Authenticator app', status: 'verified' }]
           : []
         return ok({ all: totp, totp, phone: [] })
+      },
+
+      // Enroll a new TOTP factor. The "Add app" modal collects the account password (which
+      // @better-auth requires to enable 2FA) + a friendly name. POST /two-factor/enable
+      // returns an otpauth:// URI; we render it to a QR data-uri because the modal shows
+      // <img src={totp.qr_code}>. The factor isn't fully active until challengeAndVerify
+      // (verify-totp) confirms a code.
+      async enroll(params: { factorType?: string; friendlyName?: string; password?: string }) {
+        try {
+          const res = await authFetch('/two-factor/enable', {
+            method: 'POST',
+            body: JSON.stringify({ password: params.password ?? '' }),
+          })
+          const json = await res.json().catch(() => ({}))
+          if (!res.ok || !json?.totpURI) {
+            return fail(
+              json?.message ??
+                json?.error?.message ??
+                'Could not start enrollment — check your password and try again.',
+              res.status
+            )
+          }
+          const uri: string = json.totpURI
+          const secret = /[?&]secret=([^&]+)/i.exec(uri)?.[1] ?? ''
+          const qr_code = await QRCode.toDataURL(uri, { margin: 1, width: 200 })
+          return ok({
+            id: 'totp',
+            type: 'totp',
+            friendly_name: params.friendlyName,
+            totp: { qr_code, secret, uri },
+          })
+        } catch (e: any) {
+          return fail(e?.message ?? 'Failed to enroll MFA factor', 500)
+        }
+      },
+
+      // Remove TOTP / cancel an in-progress enrollment -> @better-auth /two-factor/disable
+      // (also password-gated).
+      async unenroll(params: { factorId?: string; password?: string }) {
+        try {
+          const res = await authFetch('/two-factor/disable', {
+            method: 'POST',
+            body: JSON.stringify({ password: params.password ?? '' }),
+          })
+          const json = await res.json().catch(() => ({}))
+          if (!res.ok) {
+            return fail(
+              json?.message ??
+                json?.error?.message ??
+                'Could not remove MFA — check your password and try again.',
+              res.status
+            )
+          }
+          return ok({ id: params.factorId })
+        } catch (e: any) {
+          return fail(e?.message ?? 'Failed to remove MFA factor', 500)
+        }
       },
 
       // Verify the TOTP code at sign-in. The "Confirm your MFA" form (shown when
