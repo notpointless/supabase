@@ -1,32 +1,13 @@
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
-import { join } from 'node:path'
 import { NextApiRequest, NextApiResponse } from 'next'
 
-import { consoleGet } from '@/lib/console-bff'
-
-// [console fork] Persist the user's auth-config overrides so toggles stick across
-// reloads (GoTrue's runtime config isn't a platform DB here). Stored per-project.
-const CONFIG_DIR = join(process.cwd(), '.auth-config')
-const overridesPath = (ref: string) => join(CONFIG_DIR, `${ref}.json`)
-
-function readOverrides(ref: string): Record<string, unknown> {
-  try {
-    return JSON.parse(readFileSync(overridesPath(ref), 'utf8'))
-  } catch {
-    return {}
-  }
-}
-
-function writeOverrides(ref: string, overrides: Record<string, unknown>) {
-  if (!existsSync(CONFIG_DIR)) mkdirSync(CONFIG_DIR, { recursive: true })
-  writeFileSync(overridesPath(ref), JSON.stringify(overrides, null, 2), 'utf8')
-}
+import { consoleFetch, consoleGet } from '@/lib/console-bff'
 
 // [console fork] GET/PATCH the project's GoTrue auth config for the Authentication
-// settings pages. Supabase stores this in its platform DB; we don't, so we return a
-// sensible self-host default (derived where possible from the project) so every Auth
-// settings sub-page renders. PATCH is accepted and echoed back (config is governed by
-// the project's GoTrue env on shared infra).
+// settings pages. Supabase stores this in its platform DB; we store it on the project in
+// the control-plane (so `buildStack` can apply it to GoTrue — signups, OAuth providers,
+// the OAuth server, etc.). This BFF merges a sensible self-host default (so every Auth
+// settings sub-page renders) with the project's saved overrides, and forwards edits to the
+// backend, which persists them and reconfigures the running stack.
 const defaultConfig = (siteUrl: string) => ({
   SITE_URL: siteUrl,
   URI_ALLOW_LIST: '',
@@ -92,6 +73,10 @@ const defaultConfig = (siteUrl: string) => ({
   HOOK_MFA_VERIFICATION_ATTEMPT_ENABLED: false,
   HOOK_PASSWORD_VERIFICATION_ATTEMPT_ENABLED: false,
 
+  // OAuth 2.1 authorization server (the project-internal "OAuth Server" page)
+  OAUTH_SERVER_ENABLED: false,
+  OAUTH_SERVER_ALLOW_DYNAMIC_REGISTRATION: false,
+
   // OAuth providers — all disabled by default on self-host
   ...Object.fromEntries(
     [
@@ -117,13 +102,26 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   if (req.method === 'GET') {
-    // defaults <- persisted overrides, so saved toggles survive reloads.
-    return res.status(200).json({ ...defaultConfig(siteUrl), ...readOverrides(ref) })
+    // defaults <- persisted overrides (from the control-plane), so saved toggles survive.
+    const { data: overrides } = await consoleGet<Record<string, unknown>>(
+      req,
+      `/api/v1/projects/${ref}/auth-config`
+    )
+    return res.status(200).json({ ...defaultConfig(siteUrl), ...(overrides ?? {}) })
   }
   if (req.method === 'PATCH' || req.method === 'PUT' || req.method === 'POST') {
-    const merged = { ...readOverrides(ref), ...(req.body ?? {}) }
-    writeOverrides(ref, merged)
-    return res.status(200).json({ ...defaultConfig(siteUrl), ...merged })
+    // Persist + reconfigure on the control-plane; it returns the merged override set.
+    const { ok, status, data: merged } = await consoleFetch<Record<string, unknown>>(
+      req,
+      `/api/v1/projects/${ref}/auth-config`,
+      { method: 'PATCH', body: JSON.stringify(req.body ?? {}) }
+    )
+    if (!ok) {
+      return res
+        .status(status || 500)
+        .json({ error: { message: 'Failed to update auth configuration' } })
+    }
+    return res.status(200).json({ ...defaultConfig(siteUrl), ...(merged ?? {}) })
   }
   res.setHeader('Allow', ['GET', 'PATCH'])
   return res.status(405).json({ error: { message: `Method ${req.method} Not Allowed` } })
