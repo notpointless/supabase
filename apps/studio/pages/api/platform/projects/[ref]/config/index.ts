@@ -19,13 +19,14 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 }
 
 const handleGetAll = async (_req: NextApiRequest, res: NextApiResponse) => {
-  // Platform specific endpoint
+  // [console fork] Legacy single-tenant shim — nothing in the data layer reads this route's
+  // jwt_secret, and per-project secrets must never come from THIS process's env (that's the
+  // console's own config, not the project's). Return the upstream placeholder, never env.
   return res.status(200).json({
     db_anon_role: 'anon',
     db_extra_search_path: 'public',
     db_schema: 'public, storage',
-    jwt_secret:
-      process.env.AUTH_JWT_SECRET ?? 'super-secret-jwt-token-with-at-least-32-characters-long',
+    jwt_secret: 'super-secret-jwt-token-with-at-least-32-characters-long',
     max_rows: 100,
     role_claim_key: '.role',
   })
