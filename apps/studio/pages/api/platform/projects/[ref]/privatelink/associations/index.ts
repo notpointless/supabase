@@ -2,7 +2,7 @@ import { bff, consoleGet } from '@/lib/console-bff'
 
 // [console fork] AWS PrivateLink account allowlist for a project. Maps our
 // control-plane accounts to the dashboard's private_link_associations shape.
-// (Endpoint-service provisioning is deferred; this is the account allowlist.)
+// Adding the first account provisions the real VPC endpoint service (EC2-only).
 const STATUS_MAP: Record<string, string> = { pending: 'CREATING', active: 'READY' }
 
 export default bff({
