@@ -147,6 +147,10 @@ async function resolveDataPlane(
     consoleGet<any>(req, `/api/v1/projects/${ref}`),
     consoleGet<{ serviceRoleKey?: string }>(req, `/api/v1/projects/${ref}/api-keys`),
   ])
+  // Only resolve a RUNNING project. A paused/stopped EC2 instance is unreachable, and the
+  // data-plane BFFs fetch it with no timeout — each call would hang for the TCP timeout.
+  // Returning null makes every data-plane BFF degrade to its graceful "not running" path.
+  if (project?.status && project.status !== 'active') return null
   const port = project?.connection?.kongHttpPort ?? project?.kongHttpPort
   const host = project?.connection?.host ?? 'localhost'
   if (!port || !keys?.serviceRoleKey) return null
