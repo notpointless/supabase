@@ -359,13 +359,15 @@ services:
       AUTH_JWT_SECRET: ${JWT_SECRET}
 
       # JWKS for token verification (EC public + legacy symmetric).
-      # For Podman, use: JWT_JWKS: ${JWT_JWKS}
-      #JWT_JWKS: ${JWT_JWKS:-{"keys":[]}}
+      # [console fork] Enabled so storage verifies ES256 (asymmetric signing-key) tokens —
+      # without it only the legacy HS256 secret works.
+      JWT_JWKS: ${JWT_JWKS:-{"keys":[]}}
 
       DATABASE_URL: postgres://supabase_storage_admin:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}
       STORAGE_PUBLIC_URL: ${SUPABASE_PUBLIC_URL}
       REQUEST_ALLOW_X_FORWARDED_PATH: "true"
-      FILE_SIZE_LIMIT: 52428800
+      # [console fork] overridable from the Storage settings page (default 50 MB)
+      FILE_SIZE_LIMIT: ${FILE_SIZE_LIMIT:-52428800}
       STORAGE_BACKEND: file
       # S3 bucket when using S3 backend, directory name when using 'file'
       GLOBAL_S3_BUCKET: ${GLOBAL_S3_BUCKET}
@@ -384,6 +386,18 @@ services:
       # S3 protocol endpoint configuration
       S3_PROTOCOL_ACCESS_KEY_ID: ${S3_PROTOCOL_ACCESS_KEY_ID}
       S3_PROTOCOL_ACCESS_KEY_SECRET: ${S3_PROTOCOL_ACCESS_KEY_SECRET}
+      # [console fork] Vector buckets — Postgres-backed (pgvector), no AWS needed. Storage
+      # creates its own `storage_vectors` database on startup, which needs CREATEDB — hence the
+      # postgres superuser in the URL (the storage admin role can't create databases).
+      VECTOR_ENABLED: ${VECTOR_ENABLED:-true}
+      VECTOR_BUCKET_PROVIDER: ${VECTOR_BUCKET_PROVIDER:-pgvector}
+      VECTOR_DATABASE_URL: postgres://postgres:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}
+      VECTOR_STORE_MIGRATIONS_ENABLED: "true"
+      # [console fork] Iceberg analytics buckets — AWS-only (the catalog proxies AWS S3 Tables
+      # with sigv4 via the instance's IAM role). The console enables this on EC2 projects.
+      ICEBERG_ENABLED: ${ICEBERG_ENABLED:-false}
+      ICEBERG_CATALOG_URL: ${ICEBERG_CATALOG_URL:-}
+      ICEBERG_WAREHOUSE: ${ICEBERG_WAREHOUSE:-}
     volumes:
       - ./volumes/storage:/var/lib/storage:z
 

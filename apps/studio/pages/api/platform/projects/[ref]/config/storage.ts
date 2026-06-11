@@ -8,15 +8,18 @@ import { consoleFetch, consoleGet } from '@/lib/console-bff'
 // the storage container) and deep-merge over sensible self-host defaults here. Forwarding edits
 // to the backend (which persists + reconfigures) — same model as auth-config.
 //
-// Self-host policy: nothing is plan-gated, so image transformation + S3 protocol are available;
-// Analytics (Iceberg) + Vector buckets default off and the toggles persist.
+// Self-host policy: nothing is plan-gated, so image transformation + S3 protocol are available.
+// Vector buckets are ON for every project (the stack runs storage's pgvector-backed vector
+// store — no AWS needed). Analytics (Iceberg) is EC2-only: storage's Iceberg catalog proxies
+// AWS S3 Tables with sigv4, which shared local projects can't reach — the GET below flips it
+// on for dedicated projects.
 const DEFAULT = {
   fileSizeLimit: 52428800,
   features: {
     imageTransformation: { enabled: true },
     s3Protocol: { enabled: true },
     icebergCatalog: { enabled: false, maxCatalogs: 2 },
-    vectorBuckets: { enabled: false },
+    vectorBuckets: { enabled: true },
   },
   capabilities: { list_v2: true },
   external: { upstreamTarget: 'main' },
@@ -48,11 +51,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const ref = String(req.query.ref ?? '')
 
   if (req.method === 'GET') {
-    const { data: overrides } = await consoleGet<Record<string, unknown>>(
-      req,
-      `/api/v1/projects/${ref}/storage-config`
-    )
-    return res.status(200).json(deepMerge(DEFAULT, overrides ?? {}) as StorageConfig)
+    const [{ data: overrides }, { data: proj }] = await Promise.all([
+      consoleGet<Record<string, unknown>>(req, `/api/v1/projects/${ref}/storage-config`),
+      consoleGet<{ infrastructureType?: string }>(req, `/api/v1/projects/${ref}`),
+    ])
+    // Iceberg analytics buckets need AWS (S3 Tables catalog) — EC2-only.
+    const isDedicated = !!proj?.infrastructureType && proj.infrastructureType !== 'shared'
+    const base = deepMerge(DEFAULT, {
+      features: { icebergCatalog: { enabled: isDedicated } },
+    })
+    return res.status(200).json(deepMerge(base, overrides ?? {}) as StorageConfig)
   }
   if (req.method === 'PATCH' || req.method === 'PUT' || req.method === 'POST') {
     const { ok, status, data: merged } = await consoleFetch<Record<string, unknown>>(

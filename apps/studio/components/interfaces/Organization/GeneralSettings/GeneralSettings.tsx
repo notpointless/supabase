@@ -6,7 +6,6 @@ import {
   PageSectionTitle,
 } from 'ui-patterns/PageSection'
 
-import { DataPrivacyForm } from './DataPrivacyForm'
 import { GitHubAppForm } from './GitHubAppForm'
 import { OrganizationDeletePanel } from './OrganizationDeletePanel'
 import { OrganizationDetailsForm } from './OrganizationDetailsForm'
@@ -42,16 +41,8 @@ export const GeneralSettings = () => {
         </PageSectionContent>
       </PageSection>
 
-      <PageSection>
-        <PageSectionMeta>
-          <PageSectionSummary>
-            <PageSectionTitle>Data privacy</PageSectionTitle>
-          </PageSectionSummary>
-        </PageSectionMeta>
-        <PageSectionContent>
-          <DataPrivacyForm />
-        </PageSectionContent>
-      </PageSection>
+      {/* [console fork] Data privacy / "Supabase Assistant Opt-in Level" removed — this
+          self-hosted console sends nothing to Supabase, so the opt-in is meaningless here. */}
 
       {organizationDeletionEnabled && (
         <PageSection>
