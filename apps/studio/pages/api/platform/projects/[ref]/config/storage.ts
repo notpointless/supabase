@@ -1,20 +1,15 @@
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
-import { join } from 'node:path'
 import { NextApiRequest, NextApiResponse } from 'next'
 
-// [console fork] Persist the project's Storage config overrides so the Storage
-// settings page (file size limit, image transformation, S3 protocol, analytics +
-// vector buckets) sticks across reloads. Supabase keeps this in its platform DB;
-// we don't, so we persist per-project to disk and deep-merge over sensible
-// self-host defaults. Mirrors the auth-config persistence pattern.
-const CONFIG_DIR = join(process.cwd(), '.storage-config')
-const overridesPath = (ref: string) => join(CONFIG_DIR, `${ref}.json`)
+import { consoleFetch, consoleGet } from '@/lib/console-bff'
 
-// Defaults for shared infra (50 MB upload limit, image transformation + S3
-// protocol available). Self-host policy: nothing is plan-gated, so Analytics
-// (Iceberg) + Vector buckets are enabled by default (no "Upgrade to Pro"). The
-// user can still turn them off via the Storage settings toggles; the override is
-// what makes `useIsAnalyticsBucketsEnabled` / `useIsVectorBucketsEnabled` stick.
+// [console fork] The Storage settings page (file size limit, image transformation, S3 protocol,
+// analytics + vector buckets). Supabase keeps this in its platform DB; we store the overrides on
+// the project in the control-plane (so buildStack can apply fileSizeLimit -> FILE_SIZE_LIMIT on
+// the storage container) and deep-merge over sensible self-host defaults here. Forwarding edits
+// to the backend (which persists + reconfigures) — same model as auth-config.
+//
+// Self-host policy: nothing is plan-gated, so image transformation + S3 protocol are available;
+// Analytics (Iceberg) + Vector buckets default off and the toggles persist.
 const DEFAULT = {
   fileSizeLimit: 52428800,
   features: {
@@ -29,21 +24,8 @@ const DEFAULT = {
 
 type StorageConfig = typeof DEFAULT & Record<string, unknown>
 
-function readOverrides(ref: string): Record<string, unknown> {
-  try {
-    return JSON.parse(readFileSync(overridesPath(ref), 'utf8'))
-  } catch {
-    return {}
-  }
-}
-
-function writeOverrides(ref: string, overrides: Record<string, unknown>) {
-  if (!existsSync(CONFIG_DIR)) mkdirSync(CONFIG_DIR, { recursive: true })
-  writeFileSync(overridesPath(ref), JSON.stringify(overrides, null, 2), 'utf8')
-}
-
-// Deep-merge so a PATCH of just `{ features: { vectorBuckets: { enabled: true } } }`
-// keeps the other feature flags intact.
+// Deep-merge so a PATCH of just `{ features: { vectorBuckets: { enabled: true } } }` keeps the
+// other feature flags intact.
 function deepMerge<T extends Record<string, any>>(base: T, override: Record<string, any>): T {
   const out: Record<string, any> = Array.isArray(base) ? [...base] : { ...base }
   for (const [key, value] of Object.entries(override ?? {})) {
@@ -62,19 +44,28 @@ function deepMerge<T extends Record<string, any>>(base: T, override: Record<stri
   return out as T
 }
 
-const resolved = (ref: string): StorageConfig =>
-  deepMerge(DEFAULT, readOverrides(ref)) as StorageConfig
-
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const ref = String(req.query.ref ?? '')
 
   if (req.method === 'GET') {
-    return res.status(200).json(resolved(ref))
+    const { data: overrides } = await consoleGet<Record<string, unknown>>(
+      req,
+      `/api/v1/projects/${ref}/storage-config`
+    )
+    return res.status(200).json(deepMerge(DEFAULT, overrides ?? {}) as StorageConfig)
   }
   if (req.method === 'PATCH' || req.method === 'PUT' || req.method === 'POST') {
-    const merged = deepMerge(readOverrides(ref), req.body ?? {})
-    writeOverrides(ref, merged)
-    return res.status(200).json(resolved(ref))
+    const { ok, status, data: merged } = await consoleFetch<Record<string, unknown>>(
+      req,
+      `/api/v1/projects/${ref}/storage-config`,
+      { method: 'PATCH', body: JSON.stringify(req.body ?? {}) }
+    )
+    if (!ok) {
+      return res
+        .status(status || 500)
+        .json({ error: { message: 'Failed to update storage configuration' } })
+    }
+    return res.status(200).json(deepMerge(DEFAULT, merged ?? {}) as StorageConfig)
   }
   res.setHeader('Allow', ['GET', 'PATCH'])
   return res.status(405).json({ error: { message: `Method ${req.method} Not Allowed` } })
