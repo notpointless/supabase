@@ -1,6 +1,7 @@
 import { bff, consoleGet } from '@/lib/console-bff'
 
-// [console fork] Logical database backups, served from the control plane (pg_dump).
+// [console fork] Database backups from the control plane: logical (pg_dump, all projects)
+// merged with physical (EBS snapshots, dedicated/EC2 projects).
 export default bff({
   GET: async (req, res) => {
     const ref = String(req.query.ref ?? '')
@@ -11,7 +12,7 @@ export default bff({
       walg_enabled: data?.walg_enabled ?? false,
       pitr_enabled: data?.pitr_enabled ?? false,
       physicalBackupData: data?.physicalBackupData ?? {},
-      physicalBackupsEnabled: false,
+      physicalBackupsEnabled: data?.physicalBackupsEnabled ?? false,
       tierKey: '',
     })
   },
