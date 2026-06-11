@@ -7,7 +7,6 @@ import { useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { toast } from 'sonner'
 import { Button, Card, CardContent, CardFooter, Form, FormControl, FormField, Switch } from 'ui'
-import { Admonition } from 'ui-patterns/admonition'
 import {
   PageSection,
   PageSectionContent,
@@ -21,19 +20,16 @@ import * as z from 'zod'
 import { TEMPLATES_SCHEMAS } from './AuthTemplatesValidation'
 import { CustomEmailTemplateRestrictionAdmonition } from './CustomEmailTemplateRestrictionAdmonition'
 import {
-  hasCustomEmailSender,
   isCustomEmailTemplateEditingRestricted,
   isCustomEmailTemplateRestrictionStatusKnown,
   slugifyTitle,
 } from './EmailTemplates.utils'
 import AlertError from '@/components/ui/AlertError'
-import { InlineLink } from '@/components/ui/InlineLink'
 import { useAuthConfigQuery } from '@/data/auth/auth-config-query'
 import { useAuthConfigUpdateMutation } from '@/data/auth/auth-config-update-mutation'
 import { useAsyncCheckPermissions } from '@/hooks/misc/useCheckPermissions'
 import { useSelectedOrganizationQuery } from '@/hooks/misc/useSelectedOrganization'
 import { useSelectedProjectQuery } from '@/hooks/misc/useSelectedProject'
-import { DOCS_URL } from '@/lib/constants'
 
 const notificationEnabledKeys = TEMPLATES_SCHEMAS.filter(
   (t) => t.misc?.emailTemplateType === 'security'
@@ -78,7 +74,6 @@ export const EmailTemplates = () => {
     },
   })
 
-  const usingBuiltInEmailSender = !hasCustomEmailSender(authConfig)
   const isTemplateRestrictionStatusKnown = isCustomEmailTemplateRestrictionStatusKnown({
     authConfig,
     organization: selectedOrganization,
@@ -138,28 +133,6 @@ export const EmailTemplates = () => {
           <PageSection>
             {isTemplateEditBlocked ? (
               <CustomEmailTemplateRestrictionAdmonition />
-            ) : usingBuiltInEmailSender ? (
-              <Admonition
-                type="warning"
-                title="Set up custom SMTP"
-                description={
-                  <p>
-                    You’re using the built-in email service. This service has rate limits and is not
-                    meant to be used for production apps.{' '}
-                    <InlineLink
-                      href={`${DOCS_URL}/guides/platform/going-into-prod#auth-rate-limits`}
-                    >
-                      Learn more
-                    </InlineLink>{' '}
-                  </p>
-                }
-                layout="horizontal"
-                actions={
-                  <Button asChild type="default">
-                    <Link href={`/project/${projectRef}/auth/smtp`}>Set up SMTP</Link>
-                  </Button>
-                }
-              />
             ) : null}
             <PageSectionMeta>
               <PageSectionSummary>
