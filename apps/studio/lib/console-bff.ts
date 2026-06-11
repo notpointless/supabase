@@ -201,6 +201,29 @@ export async function getFullOrg(req: import('next').NextApiRequest, slug: strin
   return data
 }
 
+// [console fork] Resolve a project's OWN Kong/GoTrue endpoint + per-project service_role/anon
+// tokens from the authorized control-plane endpoint, so project-internal admin BFFs (auth
+// providers, OAuth server, hooks, etc.) talk to the right project in this multi-tenant console
+// instead of the fixed single-tenant self-hosted constants. Server-side only; the jwtSecret
+// itself never crosses the wire — only the minted JWTs. Works for shared + EC2 (the backend
+// resolves the right host).
+export interface ProjectInternalConfig {
+  endpoint: string
+  serviceRoleKey: string
+  anonKey: string
+  infrastructureType: string
+}
+export async function getProjectInternalConfig(
+  req: NextApiRequest,
+  ref: string
+): Promise<ProjectInternalConfig | null> {
+  const { ok, data } = await consoleGet<ProjectInternalConfig>(
+    req,
+    `/api/v1/projects/${encodeURIComponent(ref)}/internal-config`
+  )
+  return ok && data?.endpoint ? data : null
+}
+
 // Our org roles mapped to stable numeric ids the dashboard's member rows reference.
 export const ROLE_NAME_TO_ID: Record<string, number> = { owner: 1, administrator: 2, developer: 3 }
 export const ORG_ROLES = [
