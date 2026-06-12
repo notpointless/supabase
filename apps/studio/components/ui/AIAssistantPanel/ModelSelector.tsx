@@ -1,6 +1,6 @@
 import { Check, ChevronsUpDown } from 'lucide-react'
 import { useRouter } from 'next/router'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import {
   Badge,
   Button,
@@ -27,6 +27,18 @@ interface ModelSelectorProps {
   onSelectModel: (model: AssistantModelId) => void
 }
 
+// [console fork] Pick a sensible default from the org's live model list. Preference order keeps a
+// good general assistant model selected as OpenAI retires older ones — as long as SOME gpt model
+// exists the assistant keeps working without anyone touching a hardcoded id.
+function pickDefaultModel(models: string[]): string | undefined {
+  const prefer = [/^gpt-5/i, /^gpt-4\.1/i, /^gpt-4o/i, /^gpt-4/i, /^o[0-9]/i, /^gpt-/i]
+  for (const re of prefer) {
+    const match = models.find((m) => re.test(m))
+    if (match) return match
+  }
+  return models[0]
+}
+
 export const ModelSelector = ({ selectedModel, onSelectModel }: ModelSelectorProps) => {
   const router = useRouter()
   const { data: organization } = useSelectedOrganizationQuery()
@@ -43,6 +55,17 @@ export const ModelSelector = ({ selectedModel, onSelectModel }: ModelSelectorPro
   const { data: orgModels } = useOrgAIModelsQuery(organization?.slug)
   const dynamicModels = orgModels?.models ?? []
   const useDynamic = dynamicModels.length > 0
+
+  // [console fork] Self-heal a stale selection: once the live model list loads, if the current
+  // pick isn't offered by the org's OpenAI account (it was retired, or was a built-in default
+  // that account never had), switch to a sensible available model automatically.
+  useEffect(() => {
+    if (!useDynamic) return
+    if (dynamicModels.includes(selectedModel)) return
+    const fallback = pickDefaultModel(dynamicModels)
+    if (fallback) onSelectModel(fallback as AssistantModelId)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [useDynamic, dynamicModels.join(','), selectedModel])
 
   const upgradeHref = `/org/${slug}/billing?panel=subscriptionPlan&source=ai-assistant-model`
 
