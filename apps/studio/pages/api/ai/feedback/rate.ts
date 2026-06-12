@@ -9,6 +9,7 @@ import type { AiOptInLevel } from '@/hooks/misc/useOrgOptedIntoAi'
 import { getOrgAIDetails, getProjectAIDetails } from '@/lib/ai/ai-details'
 import { IS_TRACING_ENABLED, isTracingAllowed } from '@/lib/ai/braintrust-logger'
 import { getModel } from '@/lib/ai/model'
+import { getOrgOpenAIKey } from '@/lib/ai/org-openai'
 import { DEFAULT_COMPLETION_MODEL } from '@/lib/ai/model.utils'
 import { sanitizeMessagePart } from '@/lib/ai/tools/tool-sanitizer'
 import apiWrapper from '@/lib/api/apiWrapper'
@@ -99,9 +100,11 @@ export async function handlePost(req: NextApiRequest, res: NextApiResponse) {
   })
 
   try {
+    const apiKey = await getOrgOpenAIKey(req, { orgSlug, projectRef })
     const { modelParams, error: modelError } = await getModel({
       provider: 'openai',
       modelEntry: DEFAULT_COMPLETION_MODEL,
+      apiKey,
     })
 
     if (modelError) {

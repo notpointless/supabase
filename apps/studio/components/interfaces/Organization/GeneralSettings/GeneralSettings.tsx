@@ -6,6 +6,7 @@ import {
   PageSectionTitle,
 } from 'ui-patterns/PageSection'
 
+import { AIAssistantForm } from './AIAssistantForm'
 import { GitHubAppForm } from './GitHubAppForm'
 import { OrganizationDeletePanel } from './OrganizationDeletePanel'
 import { OrganizationDetailsForm } from './OrganizationDetailsForm'
@@ -43,6 +44,17 @@ export const GeneralSettings = () => {
 
       {/* [console fork] Data privacy / "Supabase Assistant Opt-in Level" removed — this
           self-hosted console sends nothing to Supabase, so the opt-in is meaningless here. */}
+
+      <PageSection>
+        <PageSectionMeta>
+          <PageSectionSummary>
+            <PageSectionTitle>AI Assistant</PageSectionTitle>
+          </PageSectionSummary>
+        </PageSectionMeta>
+        <PageSectionContent>
+          <AIAssistantForm />
+        </PageSectionContent>
+      </PageSection>
 
       {organizationDeletionEnabled && (
         <PageSection>

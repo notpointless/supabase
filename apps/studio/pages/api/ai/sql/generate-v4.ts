@@ -11,6 +11,7 @@ import { getOrgAIDetails, getProjectAIDetails } from '@/lib/ai/ai-details'
 import { isTracingAllowed } from '@/lib/ai/braintrust-logger'
 import { generateAssistantResponse } from '@/lib/ai/generate-assistant-response'
 import { getModel } from '@/lib/ai/model'
+import { getOrgOpenAIKey } from '@/lib/ai/org-openai'
 import {
   DEFAULT_ASSISTANT_ADVANCE_MODEL_ID,
   DEFAULT_ASSISTANT_BASE_MODEL_ID,
@@ -148,6 +149,11 @@ async function handlePost(req: NextApiRequest, res: NextApiResponse, claims?: Jw
     effectiveModel = DEFAULT_ASSISTANT_BASE_MODEL_ID
   }
 
+  // [console fork] Run the Assistant on the organization's own OpenAI key (resolved server-side
+  // from the control plane). When the org supplies a key, honour the picked model id directly
+  // (dynamic models from the org's OpenAI account) — the hosted throttling/entitlement gates
+  // don't apply to the org's own account.
+  const orgOpenAIKey = await getOrgOpenAIKey(req, { orgSlug, projectRef })
   const {
     modelParams,
     error: modelError,
@@ -155,6 +161,8 @@ async function handlePost(req: NextApiRequest, res: NextApiResponse, claims?: Jw
   } = await getModel({
     provider: 'openai',
     modelEntry: getAssistantModelEntry(effectiveModel),
+    apiKey: orgOpenAIKey,
+    modelId: orgOpenAIKey && rawRequestedModel ? rawRequestedModel : undefined,
   })
 
   if (modelError) {

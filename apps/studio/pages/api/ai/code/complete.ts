@@ -9,6 +9,7 @@ import { executeSql } from '@/data/sql/execute-sql-query'
 import { AiOptInLevel } from '@/hooks/misc/useOrgOptedIntoAi'
 import { getOrgAIDetails } from '@/lib/ai/ai-details'
 import { getModel } from '@/lib/ai/model'
+import { getOrgOpenAIKey } from '@/lib/ai/org-openai'
 import { DEFAULT_COMPLETION_MODEL } from '@/lib/ai/model.utils'
 import {
   COMPLETION_PROMPT,
@@ -162,6 +163,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       aiOptInLevel = orgAIOptInLevel
     }
 
+    const apiKey = await getOrgOpenAIKey(req, { orgSlug, projectRef })
     const {
       modelParams,
       error: modelError,
@@ -169,6 +171,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     } = await getModel({
       provider: 'openai',
       modelEntry: DEFAULT_COMPLETION_MODEL,
+      apiKey,
     })
 
     if (modelError) {

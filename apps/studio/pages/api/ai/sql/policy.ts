@@ -7,6 +7,7 @@ import { z } from 'zod'
 import type { AiOptInLevel } from '@/hooks/misc/useOrgOptedIntoAi'
 import { getOrgAIDetails } from '@/lib/ai/ai-details'
 import { getModel } from '@/lib/ai/model'
+import { getOrgOpenAIKey } from '@/lib/ai/org-openai'
 import { DEFAULT_COMPLETION_MODEL } from '@/lib/ai/model.utils'
 import { RLS_PROMPT } from '@/lib/ai/prompts'
 import { getTools } from '@/lib/ai/tools'
@@ -91,9 +92,11 @@ export async function handlePost(req: NextApiRequest, res: NextApiResponse) {
   }
 
   try {
+    const apiKey = await getOrgOpenAIKey(req, { orgSlug, projectRef })
     const { modelParams, error: modelError } = await getModel({
       provider: 'openai',
       modelEntry: DEFAULT_COMPLETION_MODEL,
+      apiKey,
     })
 
     if (modelError) {
