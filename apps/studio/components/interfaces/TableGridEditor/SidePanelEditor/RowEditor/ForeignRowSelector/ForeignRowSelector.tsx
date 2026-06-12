@@ -196,7 +196,7 @@ export const ForeignRowSelector = ({
                 <code>
                   {schemaName}.{tableName}
                 </code>
-                . Please try again or contact support.
+                . Please try again.
               </p>
             </div>
           )}

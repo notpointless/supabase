@@ -175,7 +175,7 @@ function OrganizationsErrorNotice({ error }: OrganizationsErrorNoticeProps): Rea
       <WarningIcon />
       <AlertTitle>There was an error loading your organizations</AlertTitle>
       <AlertDescription>
-        Please try again. If the problem persists, contact support.
+        Please try again.
         {error && <p className="mt-2">Error: {error.message}</p>}
       </AlertDescription>
     </Alert>

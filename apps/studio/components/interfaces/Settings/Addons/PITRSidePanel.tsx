@@ -248,8 +248,7 @@ const PITRSidePanel = () => {
             <Alert>
               <AlertTitle>PITR cannot be disabled on HIPAA projects</AlertTitle>
               <AlertDescription>
-                PITR is enabled by default for all HIPAA projects and cannot be turned off. Contact
-                support for further assistance.
+                PITR is enabled by default for all HIPAA projects and cannot be turned off.
               </AlertDescription>
               <div className="mt-4">
                 <Button type="default" asChild>

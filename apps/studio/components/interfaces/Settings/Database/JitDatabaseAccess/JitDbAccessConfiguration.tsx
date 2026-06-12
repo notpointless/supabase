@@ -307,8 +307,8 @@ export const JitDbAccessConfiguration = () => {
     unavailableReason === 'postgres_upgrade_required'
       ? 'must be upgraded to Postgres 17 or later before temporary access can be enabled.'
       : unavailableReason === 'manual_migration_required'
-        ? 'must be migrated before temporary access can be enabled. Contact support to migrate this project.'
-        : 'This feature is currently unavailable for this project. Contact support if you need help enabling it.'
+        ? 'must be migrated before temporary access can be enabled.'
+        : 'This feature is currently unavailable for this project.'
 
   useEffect(() => {
     if (!isLoadingConfiguration && jitDbAccessConfiguration) {

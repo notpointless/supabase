@@ -304,20 +304,7 @@ export const CreditTopUp = ({ slug }: { slug: string | undefined }) => {
               to the pre-tax amount. Credits will be applied to future invoices only and are not
               refundable. The topped up credits do not expire.
             </p>
-            <p className="prose text-sm">
-              For larger discounted credit packages, please reach out to us via{' '}
-              <SupportLink
-                queryParams={{
-                  orgSlug: slug,
-                  projectRef: NO_PROJECT_MARKER,
-                  subject: 'I would like to inquire about larger credit packages',
-                  category: SupportCategories.SALES_ENQUIRY,
-                }}
-              >
-                support
-              </SupportLink>
-              .
-            </p>
+            <p className="prose text-sm">The topped up credits do not expire.</p>
           </DialogDescription>
         </DialogHeader>
 

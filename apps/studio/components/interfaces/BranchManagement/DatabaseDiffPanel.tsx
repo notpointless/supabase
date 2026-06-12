@@ -46,7 +46,7 @@ export const DatabaseDiffPanel = ({
         <CircleAlert size={32} strokeWidth={1.5} className="text-foreground-muted mx-auto mb-8" />
         <h3 className="mb-1">Error loading branch diff</h3>
         <p className="text-sm text-foreground-light">
-          Please try again in a few minutes and contact support if the problem persists.
+          Please try again in a few minutes.
         </p>
       </div>
     )

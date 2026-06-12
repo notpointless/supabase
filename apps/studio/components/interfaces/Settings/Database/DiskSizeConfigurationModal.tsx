@@ -154,8 +154,7 @@ const DiskSizeConfigurationModal = ({
                 <AlertTitle>Maximum manual disk size increase reached</AlertTitle>
                 <AlertDescription>
                   <p>
-                    You cannot manually expand the disk size any more than {maxDiskSize}GB. If you
-                    need more than this, contact us via support for help.
+                    You cannot manually expand the disk size any more than {maxDiskSize}GB.
                   </p>
                   <Button asChild type="default" className="mt-3">
                     <SupportLink

@@ -1,4 +1,3 @@
-import { SupportCategories } from '@supabase/shared-types/out/constants'
 import { useFlag, useParams } from 'common'
 import { AlertCircle } from 'lucide-react'
 import { Card, CardContent } from 'ui'
@@ -16,8 +15,6 @@ import { CustomDomainDelete } from './CustomDomainDelete'
 import { CustomDomainsConfigureHostname } from './CustomDomainsConfigureHostname'
 import { CustomDomainsShimmerLoader } from './CustomDomainsShimmerLoader'
 import { CustomDomainVerify } from './CustomDomainVerify'
-import { SupportLink } from '@/components/interfaces/Support/SupportLink'
-import { InlineLinkClassName } from '@/components/ui/InlineLink'
 import { UpgradeToPro } from '@/components/ui/UpgradeToPro'
 import {
   useCustomDomainsQuery,
@@ -108,14 +105,7 @@ export const CustomDomainConfig = () => {
               <div className="flex items-center justify-center space-x-2 py-8">
                 <AlertCircle size={16} strokeWidth={1.5} />
                 <p className="text-sm text-foreground-light">
-                  Failed to retrieve custom domain configuration. Please try again later or{' '}
-                  <SupportLink
-                    queryParams={{ projectRef: ref, category: SupportCategories.SALES_ENQUIRY }}
-                    className={InlineLinkClassName}
-                  >
-                    contact support
-                  </SupportLink>
-                  .
+                  Failed to retrieve custom domain configuration. Please try again later.
                 </p>
               </div>
             </CardContent>

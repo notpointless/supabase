@@ -182,7 +182,7 @@ export const AwsMarketplaceOnboardingScreen = ({ buyerId }: { buyerId?: string }
             title="Unable to load setup"
             description={
               <>
-                Please try again. If the problem persists, contact support.
+                Please try again.
                 {effectiveError && (
                   <span className="mt-1 block text-foreground-lighter">
                     Error: {effectiveError.message}

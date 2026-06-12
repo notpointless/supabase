@@ -147,7 +147,6 @@ export const Addons = () => {
         <AlertTitle>PITR cannot be changed with HIPAA</AlertTitle>
         <AlertDescription>
           All projects should have PITR enabled by default and cannot be changed with HIPAA enabled.
-          Contact support for further assistance.
         </AlertDescription>
         <div className="mt-4">
           <Button type="default" asChild>
@@ -162,7 +161,7 @@ export const Addons = () => {
         <AlertTitle>Your project is too old to enable PITR</AlertTitle>
         <AlertDescription>
           <p className="text-sm leading-normal mb-2">
-            Reach out to us via support if you're interested
+            This feature is not available on your current project.
           </p>
           <Button asChild type="default">
             <SupportLink

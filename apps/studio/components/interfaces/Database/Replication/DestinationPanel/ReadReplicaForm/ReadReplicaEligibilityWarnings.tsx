@@ -108,7 +108,7 @@ export const ReadReplicaEligibilityWarnings = () => {
         type="warning"
         title="Read replicas can only be deployed with projects on Postgres version 15 and above"
       >
-        <p>If you'd like to use read replicas, please contact us via support</p>
+        <p>Read replicas require a dedicated (AWS EC2) project.</p>
         <Button asChild type="default" className="mt-2">
           <SupportLink
             queryParams={{

@@ -58,7 +58,7 @@ export const MarketplaceDetail = () => {
         <MarketplaceDetailBreadrumbs title="Integration not found" />
         <div className={cn(centeredContentClass, 'py-8')}>
           <Admonition type="warning" title="This integration is not currently available">
-            Please try again later or contact support if the problem persists.
+            Please try again later.
           </Admonition>
         </div>
       </>

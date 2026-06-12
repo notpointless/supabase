@@ -82,7 +82,7 @@ export const useIntegrationDetail = () => {
 
   const pageTitle = integration?.name ?? 'Integration not found'
   const pageSubTitle =
-    integration?.description ?? 'If you think this is an error, please contact support'
+    integration?.description ?? 'If you think this is an error, check the project logs'
 
   useEffect(() => {
     if (

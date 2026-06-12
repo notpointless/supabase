@@ -28,7 +28,7 @@ export const InstallationError = ({
         layout="horizontal"
         subject="Failed to uninstall Stripe Sync Engine"
         error={errorMessage ? { message: errorMessage } : undefined}
-        description="There was an error during the uninstallation of the Stripe Sync Engine, please try again. If the problem persists, contact support."
+        description="There was an error during the uninstallation of the Stripe Sync Engine, please try again."
         additionalActions={
           <Button
             type="default"
@@ -54,8 +54,8 @@ export const InstallationError = ({
         error={errorMessage ? { message: errorMessage } : undefined}
         description={
           isUpgrade
-            ? 'There was an error during the upgrade of the Stripe Sync Engine, please try again. If the problem persists, contact support.'
-            : 'There was an error during the installation of the Stripe Sync Engine, please try reinstalling the integration. If the problem persists, contact support.'
+            ? 'There was an error during the upgrade of the Stripe Sync Engine, please try again.'
+            : 'There was an error during the installation of the Stripe Sync Engine, please try reinstalling the integration.'
         }
         additionalActions={
           <Button

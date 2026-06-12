@@ -34,7 +34,7 @@ export const AnalyticsSettings = () => {
   const handleToggle = (value: boolean) => {
     if (!hasLoaded) {
       toast.error(
-        "We couldn't load the privacy settings due to an ad blocker or network error. Please disable any ad blockers and try again. If the problem persists, please contact support."
+        "We couldn't load the privacy settings due to an ad blocker or network error. Please disable any ad blockers and try again."
       )
       form.setValue('telemetryEnabled', !value)
       return

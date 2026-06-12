@@ -185,7 +185,7 @@ export const PauseDisabledState = () => {
               tooltip={{
                 content: {
                   side: 'right',
-                  text: 'No backups available, please reach out via support for assistance',
+                  text: 'No backups available',
                 },
               }}
             >

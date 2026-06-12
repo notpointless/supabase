@@ -216,17 +216,6 @@ export const SignInMfaForm = ({ context = 'sign-in' }: SignInMfaFormProps) => {
               Force sign out and clear cookies
             </Link>
           </li>
-          <li>
-            <SupportLink
-              className="text-sm transition text-foreground-light hover:text-foreground"
-              queryParams={{
-                subject: 'Unable to sign in via MFA',
-                category: SupportCategories.LOGIN_ISSUES,
-              }}
-            >
-              Reach out to us via support
-            </SupportLink>
-          </li>
         </ul>
       </div>
     </>

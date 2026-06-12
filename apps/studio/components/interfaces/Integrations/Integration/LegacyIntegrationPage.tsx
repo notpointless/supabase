@@ -62,7 +62,7 @@ const LegacyIntegrationPage = () => {
           <PageSection>
             <PageSectionContent>
               <Admonition type="warning" title="This integration is not currently available">
-                Please try again later or contact support if the problem persists.
+                Please try again later.
               </Admonition>
             </PageSectionContent>
           </PageSection>

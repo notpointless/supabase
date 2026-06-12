@@ -134,6 +134,6 @@ export function ContractIneligibilityNotice({
         />
       )
     default:
-      return <Admonition type="default" description="If the problem persists, contact support." />
+      return <Admonition type="default" description="Please try again later." />
   }
 }
