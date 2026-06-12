@@ -14,8 +14,7 @@ export default function EmptyPageState({ error }: any) {
       <div className="flex w-[320px] flex-col items-center justify-center space-y-3">
         <h4 className="text-lg">Something went wrong 🤕</h4>
         <p className="text-center text-sm text-foreground-light">
-          Sorry about that, please try again later or feel free to reach out to us if the problem
-          persists.
+          Sorry about that, please try again later.
         </p>
       </div>
       <div className="flex items-center space-x-4">

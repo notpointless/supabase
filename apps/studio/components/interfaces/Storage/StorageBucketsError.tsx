@@ -23,7 +23,7 @@ const StorageBucketsError = ({ error }: StorageBucketsErrorProps) => {
           description={
             <>
               <p className="mb-1">
-                Please try refreshing your browser, or contact support if the issue persists
+                Please try refreshing your browser, or check the project logs if the issue persists
               </p>
               <p>Error: {(error as any)?.message ?? 'Unknown'}</p>
             </>

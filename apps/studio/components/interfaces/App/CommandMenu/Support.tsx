@@ -24,13 +24,7 @@ export const useSupportCommands = () => {
           route: 'https://discord.supabase.com',
           icon: () => <LifeBuoy />,
         },
-        {
-          id: 'support-team',
-          name: 'Contact support',
-          value: 'Support: Contact support',
-          route: 'https://www.supabase.com/support',
-          icon: () => <LifeBuoy />,
-        },
+        // [console fork] Self-hosted — no Supabase support desk; "Contact support" command removed.
       ] as Array<ICommand>,
     []
   )

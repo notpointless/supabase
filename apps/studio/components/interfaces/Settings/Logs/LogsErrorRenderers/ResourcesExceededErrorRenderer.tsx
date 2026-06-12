@@ -25,7 +25,7 @@ const ResourcesExceededErrorRenderer: React.FC<ErrorRendererProps> = ({ error, i
             ? 'Avoid selecting entire objects and instead select specific keys using dot notation.'
             : 'Avoid querying across a large datetime range.'}
         </p>
-        {!isCustomQuery && <p>Please contact support if this error persists.</p>}
+        {!isCustomQuery && <p>Check the project logs if this error persists.</p>}
       </div>
       <Accordion className="text-sm" type="single">
         <AccordionItem value="1">

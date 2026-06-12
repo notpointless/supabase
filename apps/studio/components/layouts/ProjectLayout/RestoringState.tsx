@@ -145,7 +145,7 @@ export const RestoringState = () => {
                       type="warning"
                       title="This is taking longer than usual"
                       layout="responsive"
-                      description="Contact support if this project remains in a restoring state."
+                      description="Check the project logs if this project remains in a restoring state."
                       actions={
                         <Button asChild type="default">
                           <SupportLink

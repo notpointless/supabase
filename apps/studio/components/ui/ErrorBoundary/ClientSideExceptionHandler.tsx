@@ -1,13 +1,10 @@
-import { SupportCategories } from '@supabase/shared-types/out/constants'
 import { safeLocalStorage, safeSessionStorage } from 'common'
-import { ExternalLink } from 'lucide-react'
 import { useRouter } from 'next/router'
 import { Button, cn } from 'ui'
 import { Admonition } from 'ui-patterns'
 
 import CopyButton from '../CopyButton'
 import { InlineLinkClassName } from '../InlineLink'
-import { SupportLink } from '@/components/interfaces/Support/SupportLink'
 
 interface ClientSideExceptionHandlerProps {
   message: string
@@ -75,23 +72,10 @@ export const ClientSideExceptionHandler = ({
             to clean potentially outdated data
           </li>
           <li>Disable browser extensions that might modify page content (e.g. Google Translate)</li>
-          <li>If the problem persists, please contact support for assistance</li>
         </ul>
       </Admonition>
 
-      <div className={cn('w-full mx-auto grid gap-2', 'grid-cols-2 sm:w-1/2')}>
-        <Button asChild type="default" icon={<ExternalLink />}>
-          <SupportLink
-            queryParams={{
-              category: SupportCategories.DASHBOARD_BUG,
-              subject: 'Client side exception occurred on dashboard',
-              sid: sentryIssueId,
-              error: urlMessage,
-            }}
-          >
-            Contact support
-          </SupportLink>
-        </Button>
+      <div className={cn('w-full mx-auto grid gap-2', 'grid-cols-1 sm:w-1/2')}>
 
         {/* [Joshen] For local and staging, allow us to escape the error boundary */}
         {/* We could actually investigate how to make this available on prod, but without being able to reliably test this, I'm not keen to do it now */}

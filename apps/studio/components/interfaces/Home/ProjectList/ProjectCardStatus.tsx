@@ -92,7 +92,7 @@ export const ProjectCardStatus = ({
         return 'Your project will be ready in a few minutes'
       case 'isRestoreFailed':
       case 'isPauseFailed':
-        return 'Please contact support for assistance'
+        return 'Something went wrong — check the project logs'
     }
 
     if (!resourceWarnings) return undefined

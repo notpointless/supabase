@@ -8,7 +8,6 @@ import { ClientLibrary } from '@/components/interfaces/Home/ClientLibrary'
 import { ExampleProject } from '@/components/interfaces/Home/ExampleProject'
 import { EXAMPLE_PROJECTS } from '@/components/interfaces/Home/Home.constants'
 import { APIKeys } from '@/components/interfaces/Home/NewProjectPanel/APIKeys'
-import { SupportLink } from '@/components/interfaces/Support/SupportLink'
 import { useInvalidateProjectsInfiniteQuery } from '@/data/projects/org-projects-infinite-query'
 import { useInvalidateProjectDetailsQuery } from '@/data/projects/project-detail-query'
 import { useProjectStatusQuery } from '@/data/projects/project-status-query'
@@ -121,12 +120,9 @@ const BuildingState = () => {
                     description={
                       <>
                         <p className="mb-4 text-sm text-foreground-light">
-                          If your dashboard hasn't connected within 2 minutes, you can open a
-                          support ticket.
+                          If your dashboard hasn't connected within 2 minutes, check the project
+                          logs.
                         </p>
-                        <Button asChild type="default">
-                          <SupportLink>Contact support team</SupportLink>
-                        </Button>
                       </>
                     }
                   />

@@ -24,7 +24,6 @@ import {
   isLikelySupportRequest,
   uploadAttachment,
 } from './FeedbackDropdown.utils'
-import { SupportLink } from '@/components/interfaces/Support/SupportLink'
 import { InlineLinkClassName } from '@/components/ui/InlineLink'
 import { useFeedbackCategoryQuery } from '@/data/feedback/feedback-category'
 import { useSendFeedbackMutation } from '@/data/feedback/feedback-send'
@@ -220,14 +219,7 @@ export const FeedbackWidget = ({ onClose, onSwitchToIssueOptions }: FeedbackWidg
               className="rounded-none border-x-0 border-b-0"
             >
               <p>
-                Please{' '}
-                <SupportLink
-                  className={cn(InlineLinkClassName)}
-                  queryParams={{ projectRef: slug, message: feedback }}
-                >
-                  open a support ticket
-                </SupportLink>{' '}
-                to get help, as we do not reply to all product feedback.
+                Thanks for your feedback. Note that we do not reply to all product feedback.
               </p>
             </Admonition>
           </motion.div>

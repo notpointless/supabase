@@ -84,7 +84,7 @@ export const PauseFailedState = () => {
                   <InlineLink href={`/project/${ref}/database/backups/scheduled`}>here</InlineLink>.
                 </p>
                 <p className="text-sm text-foreground-light">
-                  Please contact support for assistance.
+                  Please try again in a few minutes, or check the project logs.
                 </p>
               </div>
             </div>

@@ -1,9 +1,6 @@
-import { SupportCategories } from '@supabase/shared-types/out/constants'
 import { PropsWithChildren, useEffect, useRef } from 'react'
-import { Button } from 'ui'
 import { Admonition } from 'ui-patterns/admonition'
 
-import { SupportLink } from '@/components/interfaces/Support/SupportLink'
 import { useTrack } from '@/lib/telemetry/track'
 
 export interface AlertErrorProps {
@@ -20,36 +17,22 @@ export interface AlertErrorProps {
   hideContactSupport?: boolean
 }
 
-export const ContactSupportButton = ({
-  projectRef,
-  subject,
-  error,
-}: {
+// [console fork] Self-hosted console — there is no Supabase support desk to contact, so the
+// "Contact support" button is removed everywhere. Kept as a no-op render so the many call sites
+// (and AlertError's actions) don't need to change.
+export const ContactSupportButton = (_props?: {
   projectRef?: string
   subject?: string
   error?: { message: string } | null
 }) => {
-  return (
-    <Button asChild type="default" className="w-min">
-      <SupportLink
-        queryParams={{
-          category: SupportCategories.DASHBOARD_BUG,
-          projectRef,
-          subject,
-          error: error?.message,
-        }}
-      >
-        Contact support
-      </SupportLink>
-    </Button>
-  )
+  return null
 }
 
 // [Joshen] To standardize the language for all error UIs
 export const AlertError = ({
   projectRef,
   subject,
-  description = 'Try refreshing your browser, but if the issue persists for more than a few minutes, please reach out to us via support.',
+  description = 'Try refreshing your browser. If the issue persists for more than a few minutes, check the project logs.',
   error,
   className,
   showIcon = true,

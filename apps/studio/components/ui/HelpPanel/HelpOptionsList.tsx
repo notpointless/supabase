@@ -48,7 +48,9 @@ export const HelpOptionsList = ({
 
   const include = (id: HelpOptionId): boolean => {
     if (id === 'assistant') return !!projectRef
-    if (id === 'status' || id === 'support') return isPlatform
+    // [console fork] Self-hosted — there is no Supabase support desk, so never show "Contact support".
+    if (id === 'support') return false
+    if (id === 'status') return isPlatform
     return true
   }
 
