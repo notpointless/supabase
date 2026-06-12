@@ -18,5 +18,10 @@ export default bff({
       objects_to_be_dropped: [],
       unsupported_extensions: [],
       user_defined_objects_in_internal_schemas: [],
+      // The infrastructure page renders these UNGUARDED (data.validation_errors.length via
+      // ValidationErrorsWarning, data.warnings.map) — omitting them crashes the page with
+      // "Cannot read properties of undefined (reading 'length')".
+      validation_errors: [],
+      warnings: [],
     }),
 })
