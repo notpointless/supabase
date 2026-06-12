@@ -1,41 +1,61 @@
 import { NextApiRequest, NextApiResponse } from 'next'
 
-import { getProjectDataPlane } from '@/lib/console-bff'
+import { consoleGet } from '@/lib/console-bff'
 
-// [console fork] Proxy S3 access keys to the project's Storage API
-// ({kong}/storage/v1/credentials) using the service role key.
+// [console fork] S3 access keys. Single-tenant self-hosted storage exposes NO access-key
+// management API (the hosted /credentials route is multitenant-only), and all S3-protocol
+// access to a project goes through ONE static credential pair that the storage container
+// validates for sigv4. So "creating an S3 access key" here returns the project's existing
+// S3-protocol credentials (derived from its JWT secret, server-side in the control plane).
+// This is what the S3-vectors FDW + external S3 clients use to sign against /storage/v1/s3.
+
+type S3Creds = { accessKeyId: string; secretAccessKey: string }
+
+async function getCreds(req: NextApiRequest, ref: string): Promise<S3Creds | null> {
+  const { ok, data } = await consoleGet<S3Creds>(
+    req,
+    `/api/v1/projects/${encodeURIComponent(ref)}/s3-credentials`
+  )
+  return ok && data?.accessKeyId ? data : null
+}
+
+const DESCRIPTION = 'Project S3 access key'
+
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const ref = String(req.query.ref ?? '')
-  const dp = await getProjectDataPlane(req, ref)
-  if (!dp) return res.status(503).json({ error: { message: 'Project is not running' } })
 
-  const url = `${dp.baseUrl}/storage/v1/credentials`
-  const headers = {
-    'Content-Type': 'application/json',
-    apikey: dp.serviceKey,
-    Authorization: `Bearer ${dp.serviceKey}`,
+  if (req.method === 'GET') {
+    const creds = await getCreds(req, ref)
+    if (!creds) return res.status(200).json({ data: [] })
+    return res.status(200).json({
+      data: [
+        {
+          id: creds.accessKeyId,
+          access_key: creds.accessKeyId,
+          description: DESCRIPTION,
+          created_at: new Date(0).toISOString(),
+        },
+      ],
+    })
   }
 
-  try {
-    if (req.method === 'GET') {
-      const r = await fetch(url, { headers })
-      const body = await r.json().catch(() => [])
-      if (!r.ok) return res.status(200).json({ data: [] })
-      return res.status(200).json({ data: Array.isArray(body) ? body : ((body as any)?.data ?? []) })
+  if (req.method === 'POST') {
+    const creds = await getCreds(req, ref)
+    if (!creds) {
+      return res.status(503).json({ error: { message: 'Project is not provisioned' } })
     }
-    if (req.method === 'POST') {
-      const r = await fetch(url, { method: 'POST', headers, body: JSON.stringify(req.body ?? {}) })
-      const body = await r.json().catch(() => ({}))
-      if (!r.ok) {
-        return res
-          .status(r.status >= 400 ? r.status : 502)
-          .json({ error: { message: (body as any)?.message ?? 'Failed to create S3 access key' } })
-      }
-      return res.status(200).json(body)
-    }
-    res.setHeader('Allow', ['GET', 'POST'])
-    return res.status(405).json({ error: { message: `Method ${req.method} Not Allowed` } })
-  } catch (e: any) {
-    return res.status(502).json({ error: { message: e?.message ?? 'Storage credentials error' } })
+    const description =
+      typeof (req.body as any)?.description === 'string' && (req.body as any).description.trim()
+        ? (req.body as any).description
+        : DESCRIPTION
+    return res.status(200).json({
+      id: creds.accessKeyId,
+      access_key: creds.accessKeyId,
+      secret_key: creds.secretAccessKey,
+      description,
+    })
   }
+
+  res.setHeader('Allow', ['GET', 'POST'])
+  return res.status(405).json({ error: { message: `Method ${req.method} Not Allowed` } })
 }
